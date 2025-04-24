@@ -1,0 +1,40 @@
+# Docker environment variables
+.env
+
+# Logs
+logs
+*.log
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Rails
+*.rbc
+capybara-*.html
+.rspec
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/db/*.sqlite3-[0-9]*
+/public/system
+/coverage/
+/spec/tmp
+*.orig
+rerun.txt
+pickle-email-*.html
+.byebug_history
+config/initializers/secret_token.rb
+
+# Docker volumes
+volumes/
+
+# Mac OS
+.DS_Store
+
+# Editor directories and files
+.idea
+.vscode
+*.swp
+*.swo 

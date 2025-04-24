@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BITBUCKET_USER: ${BITBUCKET_USER}
+        BITBUCKET_PASS: ${BITBUCKET_PASS}
+      ssh:
+        - default=${SSH_AUTH_SOCK}  # Forward SSH agent
+    ports:
+      - "3001:3000"  # Express.js port
+      - "8080:8080"  # Web dev server port
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - $SSH_AUTH_SOCK:/ssh-agent # Forward SSH agent socket
+    environment:
+      - NODE_ENV=development
+      - SSH_AUTH_SOCK=/ssh-agent
+    command: npm start
+
+  dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.rails
+      args:
+        BITBUCKET_USER: ${BITBUCKET_USER}
+        BITBUCKET_PASS: ${BITBUCKET_PASS}
+    ports:
+      - "3002:3000"  # Rails API port
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/bcaf_development
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+    volumes:
+      - ./bcaf_digital:/app
+      - bundler_gems:/usr/local/bundle  # Cache gems between builds
+    depends_on:
+      - db
+      - elasticsearch
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # Give more time for initial setup
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bcaf_development
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  elasticsearch:
+    image: elasticsearch:7.9.3
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  elasticsearch_data:
+  bundler_gems:  # Added volume for caching gems 
