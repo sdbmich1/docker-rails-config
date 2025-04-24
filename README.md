@@ -79,6 +79,7 @@ This Docker configuration is version controlled using Git. Important files inclu
 - `entrypoint.rails.sh`: Entry point script for the Rails container
 - `docker-compose.yml`: Configuration for all services
 - `.gitignore`: Excludes unnecessary files from version control
+- `docker-manage.sh`: Helper script for managing Docker containers
 
 ### Git Setup
 
@@ -103,7 +104,44 @@ git push origin feature/your-feature-name
 
 ## Building and Running
 
-To build and run the containers:
+You can use the docker-manage.sh script to easily manage the containers:
+
+```bash
+# Set the script as executable (if not already)
+chmod +x docker-manage.sh
+
+# Show help
+./docker-manage.sh help
+
+# Build all containers
+./docker-manage.sh build
+
+# Build just the API container
+./docker-manage.sh build-api
+
+# Start all containers
+./docker-manage.sh up
+
+# Start just the API container
+./docker-manage.sh up-api
+
+# View logs from all containers
+./docker-manage.sh logs
+
+# View logs from the API container
+./docker-manage.sh logs-api
+
+# Open a shell in the API container
+./docker-manage.sh shell-api
+
+# Stop all containers
+./docker-manage.sh down
+
+# Clean up containers and volumes
+./docker-manage.sh clean
+```
+
+Alternatively, you can use Docker Compose commands directly:
 
 ```bash
 # Build all containers
