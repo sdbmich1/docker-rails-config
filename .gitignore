@@ -1,1 +1,75 @@
- 
+# Docker environment variables
+.env
+
+# Logs
+logs
+*.log
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Rails
+*.rbc
+capybara-*.html
+.rspec
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/db/*.sqlite3-[0-9]*
+/public/system
+/coverage/
+/spec/tmp
+*.orig
+rerun.txt
+pickle-email-*.html
+.byebug_history
+config/initializers/secret_token.rb
+
+# Docker volumes
+volumes/
+
+# Mac OS
+.DS_Store
+
+# Editor directories and files
+.idea
+.vscode
+*.swp
+*.swo
+
+# Specific directories to exclude (except our docker-rails-config)
+/tek_coding_assignment_040124/
+/apple_coding_assignment/
+/bcaf/
+/bcaf_digital/
+/bcaf_ui/
+/comics/
+/cypress/
+/express-dev/
+/mssei_req_finder/
+/mssei-rails/
+/pecan_ai/
+/pecan_corp_site/
+/slcsp/
+/slcsp_app/
+/textured/
+/textured_ai/
+/.ssh/
+
+# Only include docker-rails-config directory
+/*
+!/docker-rails-config/
+!/.gitignore
+
+# Specific files to exclude
+/*.docx
+/*.zsh
+/Dockerfile
+/Dockerfile.dev
+/package.json
+/server.js
+/cypress.config.js
+/web-dev-server.config.js
+/index.html 

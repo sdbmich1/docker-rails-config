@@ -1,70 +1,40 @@
-FROM ruby:2.7 AS builder
+FROM ruby:2.7-slim
 
-# Install dependencies for nokogiri and other gems
-RUN apt-get update -qq && apt-get install -y \
+# Install minimal dependencies
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     nodejs \
-    git \
-    curl \
-    libxml2-dev \
-    libxslt-dev \
-    pkg-config \
-    zlib1g-dev \
-    liblzma-dev \
-    postgresql-server-dev-all
+    postgresql-client \
+    curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Clone the bcaf_digital repository
-ARG BITBUCKET_USER
-ARG BITBUCKET_PASS
-RUN git clone "https://$BITBUCKET_USER:$BITBUCKET_PASS@bitbucket.org/sdbmich/bcaf_digital.git" .
+# Copy application files
+COPY sample-rails-app/ .
 
-# Install specific bundler version
+# Install bundler
 RUN gem install bundler -v 2.4.22
 
-# Force using the system libraries for nokogiri
-ENV NOKOGIRI_USE_SYSTEM_LIBRARIES=1
+# Install gems
+RUN bundle install
 
-# Setup bundle config and force platform to avoid architecture-specific issues
-RUN bundle config set --local without 'development test' && \
-    bundle config set force_ruby_platform true
-
-# Prepare for the runtime stage
+# Create necessary directories
 RUN mkdir -p tmp/pids
 
-# Runtime stage - smaller image without build tools
-FROM ruby:2.7-slim
-
-# Install runtime dependencies only
-RUN apt-get update -qq && apt-get install -y \
-    libpq5 \
-    nodejs \
-    postgresql-client \
-    curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /app
-
-# Copy application from builder stage
-COPY --from=builder /app /app
-COPY --from=builder /usr/local/bundle /usr/local/bundle
-
-# Force using the system libraries for nokogiri
-ENV NOKOGIRI_USE_SYSTEM_LIBRARIES=1
-ENV RAILS_ENV=production
-ENV RAILS_LOG_TO_STDOUT=true
-
-# Add entrypoint script
+# Copy entrypoint script
 COPY entrypoint.rails.sh /usr/bin/entrypoint.sh
 RUN chmod +x /usr/bin/entrypoint.sh
-ENTRYPOINT ["entrypoint.sh"]
 
+# Set environment variables
+ENV RAILS_ENV=development
+ENV RAILS_LOG_TO_STDOUT=true
+
+ENTRYPOINT ["entrypoint.sh"]
 EXPOSE 3000
 
-# Start the server by default
 CMD ["rails", "server", "-b", "0.0.0.0"] 
