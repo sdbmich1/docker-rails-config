@@ -1,1 +1,45 @@
- 
+version: "3.9"
+
+services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: sdbmich
+      POSTGRES_PASSWORD: setup#123
+      POSTGRES_DB: bcaf_digital_development
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sdbmich -d bcaf_digital_development"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.rails
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./sample-rails-app:/app
+      - ./entrypoint.rails.sh:/entrypoint.sh
+      - ./bcaf_digital/db:/app/db
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://sdbmich:setup%23123@db:5432/bcaf_digital_development
+      RAILS_ENV: development
+    entrypoint: ["/entrypoint.sh"]
+    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3003"]
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+  dev_default:
+    external: true 

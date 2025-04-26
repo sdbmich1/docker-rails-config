@@ -1,40 +1,37 @@
-FROM ruby:2.7-slim
+FROM ruby:3.1.2
 
-# Install minimal dependencies
-RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends \
+# Install dependencies
+RUN apt-get update -qq && apt-get install -y \
     build-essential \
     libpq-dev \
-    nodejs \
     postgresql-client \
-    curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    nodejs \
+    npm \
+    netcat-openbsd
 
-# Set working directory
+# Default directory
+ENV INSTALL_PATH /app
+RUN mkdir -p $INSTALL_PATH
+
 WORKDIR /app
 
-# Copy application files
-COPY sample-rails-app/ .
+# Copy gemfile for initial bundle install - using sample-rails-app's Gemfile
+COPY sample-rails-app/Gemfile* ./
+RUN bundle install
 
-# Install bundler
-RUN gem install bundler -v 2.4.22
+# Copy application code
+COPY sample-rails-app .
+COPY bcaf_digital/db/schema.rb db/schema.rb
 
 # Install gems
 RUN bundle install
 
-# Create necessary directories
-RUN mkdir -p tmp/pids
+# Expose port
+EXPOSE 3003
 
-# Copy entrypoint script
-COPY entrypoint.rails.sh /usr/bin/entrypoint.sh
-RUN chmod +x /usr/bin/entrypoint.sh
+# Add entrypoint script
+COPY entrypoint.rails.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Set environment variables
-ENV RAILS_ENV=development
-ENV RAILS_LOG_TO_STDOUT=true
-
-ENTRYPOINT ["entrypoint.sh"]
-EXPOSE 3000
-
-CMD ["rails", "server", "-b", "0.0.0.0"] 
+# Start the app
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3003"] 
